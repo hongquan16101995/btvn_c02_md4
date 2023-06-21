@@ -1,0 +1,61 @@
+package com.example.crud.service.impl;
+
+import com.example.crud.dto.ClassesDTO;
+import com.example.crud.model.Classes;
+import com.example.crud.repository.IClassesRepository;
+import com.example.crud.service.IClassesService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
+@Service
+public class ClassesService implements IClassesService {
+    @Autowired
+    private IClassesRepository iClassesRepository;
+
+    @Override
+    public Iterable<Classes> findAll() {
+        return iClassesRepository.findAll();
+    }
+
+    @Override
+    public Classes save(Classes classes) {
+        return iClassesRepository.save(classes);
+    }
+
+    @Override
+    public void delete(Long id) {}
+
+    @Override
+    public Optional<Classes> findOne(Long id) {
+        return iClassesRepository.findById(id);
+    }
+
+    @Override
+    public List<Classes> sortByQuantityAsc() {
+        return iClassesRepository.findAllByOrderByQuantityAsc();
+    }
+
+    @Override
+    public List<Classes> sortByQuantityDesc() {
+        return iClassesRepository.findAllByOrderByQuantityDesc();
+    }
+
+    @Override
+    public List<ClassesDTO> findAllByAvgPoint() {
+        List<Double> avg = iClassesRepository.findAllByAvg();
+        List<Classes> classes = (List<Classes>) findAll();
+        List<ClassesDTO> classesDTOS = new ArrayList<>();
+        for (int i = 0; i < classes.size(); i++) {
+            if (avg.get(i) == null) {
+                classesDTOS.add(new ClassesDTO(classes.get(i), 0D));
+            } else {
+                classesDTOS.add(new ClassesDTO(classes.get(i), avg.get(i)));
+            }
+        }
+        return classesDTOS;
+    }
+}
