@@ -7,6 +7,8 @@ public interface IGenerateService<E> {
 
     E save(E e);
 
+    E update(E e, Long id);
+
     void delete(Long id);
 
     Optional<E> findOne(Long id);

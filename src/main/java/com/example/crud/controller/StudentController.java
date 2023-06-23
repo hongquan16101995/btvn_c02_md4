@@ -6,10 +6,9 @@ import com.example.crud.service.IClassesService;
 import com.example.crud.service.IStudentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
-import org.springframework.data.web.SortDefault;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.FileCopyUtils;
 import org.springframework.web.bind.annotation.*;
@@ -17,6 +16,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import javax.validation.Valid;
 import java.io.File;
 import java.io.IOException;
 import java.util.Optional;
@@ -60,34 +60,22 @@ public class StudentController {
     }
 
     @PostMapping("/create")
-    public String create(@ModelAttribute Student student,
-                         RedirectAttributes redirect) {
-        MultipartFile image = student.getImage();
-        try {
-            if(!image.isEmpty()) {
-                FileCopyUtils.copy(image.getBytes(), new File(upload + image.getOriginalFilename()));
-            }
-        } catch (IOException io) {
-            io.printStackTrace();
-            redirect.addFlashAttribute("message", "Error exist!");
-            return "redirect:/students";
-        }
-        student.setCardPhoto(image.getOriginalFilename());
+    public String create(@ModelAttribute("student") Student student,
+                         RedirectAttributes redirect) throws DataIntegrityViolationException {
         Student studentCreate = studentService.save(student);
         if (studentCreate != null) {
-            Classes classes = student.getClasses();
-            classes.setQuantity(classes.getQuantity() + 1);
-            classesService.save(classes);
+            redirect.addFlashAttribute("message", "Create successfully!");
+            return "redirect:/students";
+        } else {
+            return "/404";
         }
-        redirect.addFlashAttribute("message", "Create successfully!");
-        return "redirect:/students";
     }
 
     @GetMapping("/update/{id}")
     public ModelAndView updatePage(@PathVariable Long id) {
         ModelAndView modelAndView = new ModelAndView("/student/update");
         Optional<Student> studentOptional = studentService.findOne(id);
-        if(studentOptional.isPresent()) {
+        if (studentOptional.isPresent()) {
             modelAndView.addObject("student", studentOptional.get());
         } else {
             modelAndView.setViewName("/student/list");
@@ -97,46 +85,28 @@ public class StudentController {
     }
 
     @PostMapping("/update/{id}")
-    public String update(@ModelAttribute Student student,
-                         @PathVariable Long id,
-                         RedirectAttributes redirect) {
-        Optional<Student> studentOptional = studentService.findOne(id);
-        if(studentOptional.isPresent()) {
-            MultipartFile image = student.getImage();
-            boolean check = image.isEmpty();
-            try {
-                if(!check) {
-                    FileCopyUtils.copy(image.getBytes(), new File(upload + image.getOriginalFilename()));
-                }
-            } catch (IOException io) {
-                io.printStackTrace();
-                redirect.addAttribute("message", "Error exist!");
-                return "redirect:/students";
-            }
-            if(!check) {
-                student.setCardPhoto(image.getOriginalFilename());
-            } else {
-                student.setCardPhoto(studentOptional.get().getCardPhoto());
-            }
-            student.setId(id);
-            studentService.save(student);
+    public String update(@ModelAttribute Student student, @PathVariable Long id,
+                         RedirectAttributes redirect) throws DataIntegrityViolationException {
+        Student studentUpdate = studentService.update(student, id);
+        if (studentUpdate != null) {
+            redirect.addFlashAttribute("message", "Update successfully!");
+            return "redirect:/students";
+        } else {
+            return "/404";
         }
-        redirect.addFlashAttribute("message", "Update successfully!");
-        return "redirect:/students";
     }
 
     @GetMapping("/delete/{id}")
     public String delete(@PathVariable Long id,
                          RedirectAttributes redirect) {
         Optional<Student> studentOptional = studentService.findOne(id);
-        if(studentOptional.isPresent()) {
+        if (studentOptional.isPresent()) {
             studentService.delete(id);
-            Classes classes = studentOptional.get().getClasses();
-            classes.setQuantity(classes.getQuantity() - 1);
-            classesService.save(classes);
+            redirect.addFlashAttribute("message", "Delete successfully!");
+            return "redirect:/students";
+        } else {
+            return "/404";
         }
-        redirect.addFlashAttribute("message", "Delete successfully!");
-        return "redirect:/students";
     }
 
     @GetMapping("/sort_age_asc")
@@ -165,5 +135,10 @@ public class StudentController {
         ModelAndView modelAndView = new ModelAndView("/student/list");
         modelAndView.addObject("students", studentService.sortByAvgPointDesc());
         return modelAndView;
+    }
+
+    @ExceptionHandler(value = DataIntegrityViolationException.class)
+    public String catchError() {
+        return "/404";
     }
 }

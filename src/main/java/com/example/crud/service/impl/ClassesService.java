@@ -27,6 +27,11 @@ public class ClassesService implements IClassesService {
     }
 
     @Override
+    public Classes update(Classes classes, Long id) {
+        return  null;
+    }
+
+    @Override
     public void delete(Long id) {}
 
     @Override
@@ -57,5 +62,17 @@ public class ClassesService implements IClassesService {
             }
         }
         return classesDTOS;
+    }
+
+    @Override
+    public void upQuantity(Classes classes) {
+        classes.setQuantity(classes.getQuantity() + 1);
+        iClassesRepository.save(classes);
+    }
+
+    @Override
+    public void downQuantity(Classes classes) {
+        classes.setQuantity(classes.getQuantity() - 1);
+        iClassesRepository.save(classes);
     }
 }

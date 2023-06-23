@@ -11,4 +11,8 @@ public interface IClassesService extends IGenerateService<Classes> {
     List<Classes> sortByQuantityDesc();
 
     List<ClassesDTO> findAllByAvgPoint();
+
+    void upQuantity(Classes classes);
+
+    void downQuantity(Classes classes);
 }
